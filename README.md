@@ -1,4 +1,4 @@
-## 📈 StockAI — AI-Powered Real-Time Stock Screening & Decision Intelligence Platform
+## 📈 StockAI — AI Powered RealTime Stock Screening & Decision Intelligence Platform
 
 StockAI is an end-to-end stock market analytics and AI-assisted screening platform designed to process market data, identify technical signals, analyze trading activity and liquidity, generate machine-learning probabilities, and produce a final AI-assisted stock decision.
 The platform combines technical analysis, market microstructure, machine learning, liquidity analysis, and an interactive Streamlit dashboard into a single workflow.
