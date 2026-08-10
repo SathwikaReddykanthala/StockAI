@@ -90,10 +90,14 @@ st.markdown(
 # FILES
 # ==========================================================
 
-FINAL_FILE = "dataset/final_ai_decisions.csv"
-LTQ_FILE = "dataset/live_ltq_features.csv"
-SMMA_FILE = "dataset/live_smma_signals.csv"
-MARKET_FILE = "dataset/live_market.csv"
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+FINAL_FILE = BASE_DIR / "final_ai_decisions.csv"
+LTQ_FILE = BASE_DIR / "live_ltq_features.csv"
+SMMA_FILE = BASE_DIR / "live_smma_signals.csv"
+MARKET_FILE = BASE_DIR / "live_market.csv"
 
 
 # ==========================================================
@@ -249,8 +253,7 @@ def add_stock_name(df):
 if final_df.empty:
 
     st.error(
-        "dataset/final_ai_decisions.csv not found. "
-        "Run the StockAI pipeline first."
+        "final_ai_decisions.csv not found in the GitHub repository."
     )
 
     st.stop()
