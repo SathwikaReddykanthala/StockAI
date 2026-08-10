@@ -901,71 +901,49 @@ c7.metric(
 
 
 # ==========================================================
-# TOP AI OPPORTUNITIES
+# ==========================================================
+# TOP AI OPPORTUNITIES - CLICKABLE
 # ==========================================================
 
 st.markdown(
-    '<div class="section-title">'
-    '🔥 Top AI Opportunities'
-    '</div>',
+    '<div class="section-title">🔥 Top AI Opportunities</div>',
     unsafe_allow_html=True
 )
-
 
 opportunities = df[
     df["AI_Opportunity_Score"] >= 45
 ].copy()
 
-
 if opportunities.empty:
 
     st.info(
-        "No stocks currently meet the opportunity "
-        "score threshold. Relax the filters from "
-        "the sidebar if required."
+        "No stocks currently meet the opportunity score threshold. "
+        "Relax the filters from the sidebar if required."
     )
 
 else:
 
     opportunities = opportunities.sort_values(
-
-        [
-            "AI_Opportunity_Score",
-            "ML_Probability"
-        ],
-
+        ["AI_Opportunity_Score", "ML_Probability"],
         ascending=False
-
     )
 
     columns = [
-
         "Symbol",
         "Stock Name",
         "Close",
-
         "Signal",
         "Trend",
-
         "ML_Probability",
-
         "LTQ_Spike_Ratio",
-
         "ETQ_5min",
-
         "Volume_Ratio",
-
         "BidQty",
         "AskQty",
-
         "Liquidity_Qualified",
-
         "AI_Opportunity_Score",
-
         "Opportunity_Level",
-
         "AI_Decision"
-
     ]
 
     columns = [
@@ -973,17 +951,257 @@ else:
         if c in opportunities.columns
     ]
 
-    st.dataframe(
-
-        opportunities[
-            columns
-        ].head(20),
-
+    selected = st.dataframe(
+        opportunities[columns].head(20),
         use_container_width=True,
-
-        hide_index=True
-
+        hide_index=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="opportunity_table"
     )
+
+    # ------------------------------------------------------
+    # SELECTED STOCK
+    # ------------------------------------------------------
+
+    if selected.selection.rows:
+
+        selected_index = selected.selection.rows[0]
+
+        selected_stock = opportunities.iloc[
+            selected_index
+        ]
+
+        selected_symbol = selected_stock["Symbol"]
+
+        st.session_state["selected_symbol"] = selected_symbol
+
+
+# ==========================================================
+# SELECTED STOCK DETAILS
+# ==========================================================
+
+if "selected_symbol" in st.session_state:
+
+    selected_symbol = st.session_state["selected_symbol"]
+
+    stock = final_df[
+        final_df["Symbol"] == selected_symbol
+    ].copy()
+
+    if not stock.empty:
+
+        stock = stock.iloc[-1]
+
+        st.markdown("---")
+
+        st.markdown(
+            '<div class="section-title">'
+            '📌 Selected Stock Analysis'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        stock_name = stock.get(
+            "Stock Name",
+            selected_symbol
+        )
+
+        st.markdown(
+            f"""
+            <div style="
+                padding:18px;
+                border-radius:12px;
+                background:#f5f7fa;
+                margin-bottom:15px;
+            ">
+                <h2 style="margin:0;">
+                    {stock_name}
+                </h2>
+                <p style="margin:5px 0;color:#777;">
+                    {selected_symbol}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # --------------------------------------------------
+        # MAIN METRICS
+        # --------------------------------------------------
+
+        c1, c2, c3, c4, c5, c6 = st.columns(6)
+
+        c1.metric(
+            "💰 Price",
+            f"₹{stock.get('Close', 0):,.2f}"
+        )
+
+        c2.metric(
+            "🤖 ML Probability",
+            f"{stock.get('ML_Probability', 0):.2%}"
+        )
+
+        c3.metric(
+            "📊 Opportunity Score",
+            f"{stock.get('AI_Opportunity_Score', 0):.1f}/100"
+        )
+
+        c4.metric(
+            "📈 Signal",
+            stock.get("Signal", "N/A")
+        )
+
+        c5.metric(
+            "📉 Trend",
+            stock.get("Trend", "N/A")
+        )
+
+        c6.metric(
+            "🧠 AI Decision",
+            stock.get("AI_Decision", "N/A")
+        )
+
+        # --------------------------------------------------
+        # TECHNICAL INDICATORS
+        # --------------------------------------------------
+
+        st.markdown("### 📈 Technical Indicators")
+
+        technical_data = {
+            "Indicator": [
+                "SMMA20",
+                "SMMA120",
+                "SMMA Gap",
+                "LTQ",
+                "LTQ Spike Ratio",
+                "ETQ 5min",
+                "ETQ 20min",
+                "ETQ 60min"
+            ],
+            "Value": [
+                stock.get("SMMA20", 0),
+                stock.get("SMMA120", 0),
+                stock.get("SMMA_Gap", 0),
+                stock.get("LTQ", 0),
+                stock.get("LTQ_Spike_Ratio", 0),
+                stock.get("ETQ_5min", 0),
+                stock.get("ETQ_20min", 0),
+                stock.get("ETQ_60min", 0)
+            ]
+        }
+
+        st.dataframe(
+            pd.DataFrame(technical_data),
+            use_container_width=True,
+            hide_index=True
+        )
+
+        # --------------------------------------------------
+        # MARKET DEPTH
+        # --------------------------------------------------
+
+        st.markdown("### 💧 Market Depth")
+
+        d1, d2, d3, d4 = st.columns(4)
+
+        d1.metric(
+            "Bid Quantity",
+            f"{stock.get('BidQty', 0):,.0f}"
+        )
+
+        d2.metric(
+            "Ask Quantity",
+            f"{stock.get('AskQty', 0):,.0f}"
+        )
+
+        d3.metric(
+            "Bid/Ask Imbalance",
+            f"{stock.get('BidAsk_Imbalance', 0):.2f}"
+        )
+
+        d4.metric(
+            "Liquidity",
+            "QUALIFIED"
+            if stock.get("Liquidity_Qualified", False)
+            else "NOT QUALIFIED"
+        )
+
+        # --------------------------------------------------
+        # VOLUME & RETURNS
+        # --------------------------------------------------
+
+        st.markdown("### 📊 Volume & Momentum")
+
+        v1, v2, v3, v4 = st.columns(4)
+
+        v1.metric(
+            "Volume",
+            f"{stock.get('Volume', 0):,.0f}"
+        )
+
+        v2.metric(
+            "Volume Ratio",
+            f"{stock.get('Volume_Ratio', 0):.2f}"
+        )
+
+        v3.metric(
+            "Return 1",
+            f"{stock.get('Return_1', 0):.2f}%"
+        )
+
+        v4.metric(
+            "Return 5",
+            f"{stock.get('Return_5', 0):.2f}%"
+        )
+
+        # --------------------------------------------------
+        # AI EXPLANATION
+        # --------------------------------------------------
+
+        st.markdown("### 🧠 AI Assessment")
+
+        score = stock.get(
+            "AI_Opportunity_Score",
+            0
+        )
+
+        level = stock.get(
+            "Opportunity_Level",
+            "N/A"
+        )
+
+        decision = stock.get(
+            "AI_Decision",
+            "N/A"
+        )
+
+        st.info(
+            f"**Opportunity:** {level}\n\n"
+            f"**AI Decision:** {decision}\n\n"
+            f"**Opportunity Score:** {score:.1f}/100"
+        )
+
+        # --------------------------------------------------
+        # COMPLETE RECORD
+        # --------------------------------------------------
+
+        with st.expander(
+            "🔍 View complete stock data"
+        ):
+
+            stock_record = pd.DataFrame(
+                [stock]
+            ).T
+
+            stock_record.columns = [
+                "Value"
+            ]
+
+            st.dataframe(
+                stock_record,
+                use_container_width=True
+            )
 
 
 # ==========================================================
@@ -1048,20 +1266,34 @@ else:
         if c in crossovers.columns
     ]
 
-    st.dataframe(
-
+    selected_cross = st.dataframe(
         crossovers[
             columns
         ].sort_values(
             "AI_Opportunity_Score",
             ascending=False
         ),
-
         use_container_width=True,
-
-        hide_index=True
-
+        hide_index=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        key="crossover_table"
     )
+    
+    if selected_cross.selection.rows:
+    
+        selected_index = selected_cross.selection.rows[0]
+    
+        selected_symbol = (
+            crossovers
+            .sort_values(
+                "AI_Opportunity_Score",
+                ascending=False
+            )
+            .iloc[selected_index]["Symbol"]
+        )
+    
+        st.session_state["selected_symbol"] = selected_symbol
 
 
 # ==========================================================
